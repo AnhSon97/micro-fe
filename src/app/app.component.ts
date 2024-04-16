@@ -7,4 +7,8 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'host-mfe';
+  constructor(){
+    console.log(process.env['API']);
+    
+  }
 }
