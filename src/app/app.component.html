@@ -1,2 +1,13 @@
 <router-outlet></router-outlet>
 <h1>hi</h1>
+<div style="width: 100%; height: 500px" id="chartdiv"></div>
+<div id="container"></div>
+
+<h2>Demo #3: Highcharts Maps with the lat/lon points</h2>
+<highcharts-chart *ngIf="highCharts"
+                  [Highcharts]="Highcharts"
+                  [constructorType]="'mapChart'"
+                  [options]="highCharts"
+
+                  style="width: 100%; height: 650px; display: block;">
+</highcharts-chart>

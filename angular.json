@@ -23,6 +23,9 @@
 						"polyfills": [
 							"zone.js"
 						],
+						"allowedCommonJsDependencies": [
+							"highcharts"
+						],
 						"tsConfig": "tsconfig.app.json",
 						"inlineStyleLanguage": "scss",
 						"assets": [

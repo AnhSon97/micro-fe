@@ -1,1 +1,18 @@
 /* You can add global styles to this file, and also import other style files */
+.animated-line {
+    stroke-dasharray: 50;
+    stroke-dashoffset: 60;
+    animation: dash 5s linear infinite;
+    stroke-width: 2;
+    stroke: #EE0033;
+}
+
+@keyframes dash {
+    from {
+        stroke-dashoffset: 100;
+    }
+
+    to {
+        stroke-dashoffset: 20;
+    }
+}
