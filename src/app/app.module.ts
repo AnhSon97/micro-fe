@@ -19,5 +19,8 @@ import { HighchartsChartModule } from 'highcharts-angular';
   ],
   providers: [],
   bootstrap: [AppComponent]
+
+
+  
 })
 export class AppModule { }
