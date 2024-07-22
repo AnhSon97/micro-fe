@@ -1,3 +1,515 @@
-<p>
-  table works!
-</p>
+<div class="d-flex justify-content-between">
+  <div *ngIf="showingPage" class="d-flex align-items-center my-3">
+    <p class="showing-results" *ngIf="rows.length > 0">
+      {{isTranslate ? ('Showing' | translate) : 'Showing'}}
+      {{
+        configTable?.total ? (pageNumber - 1) * configTable.pageSize + 1 : 0
+      }}-{{ getDisplayRecordLimit() }}/{{ configTable?.total }} {{ isTranslate ? ('results' | translate) : 'results'}}
+    </p>
+    <p class="showing-results" *ngIf="rows.length === 0">{{isTranslate ? ('Showing 0 results' | translate) : 'Showing 0 results'}}</p>
+  </div>
+  <ng-content select="[actionBar]"></ng-content>
+  <div class="d-flex my-3">
+    <div *ngIf="showingExport" class="vcs-subtitle-2 align-items-center d-flex">
+      <button
+        mat-stroked-button
+        (click)="handlerAction(rows, actionType.EXPORT)"
+        color="primary"
+        class="vcs-button mx-1 px-3 mat-focus-indicator vcs-button vcs-btn-ghost mat-stroked-button mat-button-base"
+      >
+        <mat-icon matPrefix svgIcon="vcs-upload-bottom-outline-24"></mat-icon>
+        {{isTranslate ? ('Export data' | translate): 'Export data'}}
+      </button>
+    </div>
+    <div *ngIf="showingSelectColumn" class="vcs-subtitle-2 align-items-center d-flex">
+      <button
+        [matMenuTriggerFor]="appMenu"
+        mat-stroked-button
+        color="primary"
+        class="vcs-button mx-1 px-3 vcs-btn-ghost"
+      >
+        <mat-icon matPrefix svgIcon="vcs-list-bullets-1-outline-24"></mat-icon>
+        {{isTranslate ? ('Select column' | translate): 'Select column'}}
+      </button>
+      <mat-menu class="p-2" #appMenu="matMenu">
+        <ng-container *ngFor="let item of listColumn">
+          <div *ngIf="item.type != 'action' && !item?.offSelect">
+            <mat-checkbox
+              *ngIf="item.type != 'checkbox'"
+              style="display: block"
+              class="vcs-checkbox"
+              [(ngModel)]="item.activated"
+              (click)="selectActiveColumn($event)"
+              >{{ item.name | translate}}
+            </mat-checkbox>
+          </div>
+        </ng-container>
+      </mat-menu>
+    </div>
+  </div>
+</div>
+<div
+  *ngIf="listColumn?.length && reloadTable"
+  [style.height]="configTable.height"
+  class="table-view"
+>
+  <ngx-datatable
+    #table
+    class="material vcs-datatable fullscreen custom-table-sonna"
+    [rows]="rows"
+    [headerHeight]="45"
+    [messages]="messages"
+    [rowHeight]="'auto'"
+    [footerHeight]="50"
+    [scrollbarH]="true"
+    [scrollbarV]="true"
+    [virtualization]="false"
+    [selectionType]="SelectionType.checkbox"
+    [externalPaging]="true"
+    (activate)="activate($event)"
+    [count]="configTable.total || 1000"
+    [columnMode]="'force'"
+  >
+    <ngx-datatable-column
+      *ngIf="showSelection"
+      [maxWidth]="40"
+      [width]="40"
+      [frozenLeft]="true"
+    >
+      <ng-template
+        ngx-datatable-header-template
+        let-allRowsSelected="allRowsSelected"
+        let-selectFn="selectFn"
+        let-value="value"
+      >
+        <div>
+          <mat-checkbox
+            class="vcs-checkbox"
+            [checked]="allComplete"
+            [indeterminate]="someComplete()"
+            (keyup)="toogleAll($event, allRowsSelected, selectFn)"
+            (change)="setAll($event.checked); selectFn(!allRowsSelected)"
+          >
+          </mat-checkbox>
+        </div>
+      </ng-template>
+      <ng-template
+        let-row="row"
+        let-onCheckboxChangeFn="onCheckboxChangeFn"
+        ngx-datatable-cell-template
+      >
+        <mat-checkbox
+          class="vcs-checkbox"
+          [(ngModel)]="row.isSelected"
+          (keyup)="toogle($event, row)"
+          (change)="onCheckboxChangeFn($event); select(row)"
+        >
+        </mat-checkbox>
+      </ng-template>
+    </ngx-datatable-column>
+
+    <ngx-datatable-column
+      *ngFor="let column of ShowColumn"
+      [width]="column.width"
+      [maxWidth]="column?.maxWidth"
+      [sortable]="
+        column.sortable == null || column.sortable == undefined
+          ? true
+          : column.sortable
+      "
+      [draggable]="
+        column.draggable == null || column.draggable == undefined
+          ? true
+          : column.draggable
+      "
+      [resizeable]="
+        column.resizeable == null || column.resizeable == undefined
+          ? true
+          : column.resizeable
+      "
+      [name]="column.name"
+      [frozenRight]="column.frozenRight"
+      [cellClass]="column?.cellClass"
+      [headerClass]="column?.headerClass"
+      [prop]="column.prod"
+    >
+      <ng-template ngx-datatable-header-template let-sort="sortFn">
+        <div class="group-filter d-flex">
+          <span class="title">{{ isTranslate ? (column.name | translate):column.name}}</span>
+          <div
+            *ngIf="column.type != 'action'"
+            class="filter-icon d-flex align-items-center ml-2"
+          >
+            <mat-icon
+              style="cursor: pointer"
+              *ngIf="!column?.sort && checkSort(column) && column.sort !== null"
+              svgIcon="vcs-chevron-down-outline-24"
+              (click)="sortConfig(column, sort)"
+            ></mat-icon>
+            <mat-icon
+              style="cursor: pointer"
+              *ngIf="column?.sort && checkSort(column) && column.sort !== null"
+              svgIcon="vcs-chevron-up-outline-24"
+              (click)="sortConfig(column, sort)"
+            ></mat-icon>
+            <mat-icon
+              *ngIf="column?.sortExtend"
+              style="cursor: pointer"
+              class="vcs-icon-16"
+              svgIcon="vcs-filter-outline-24"
+              (click)="sortExtend(column)"
+            ></mat-icon>
+          </div>
+        </div>
+      </ng-template>
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        <ng-container [ngSwitch]="column.type">
+          <ng-container *ngSwitchCase="'status'">
+            <div class="css-status" *ngIf="row[column.prod] == 1">
+              <div class="custom-circle-color"></div>
+              <div>Active</div>
+            </div>
+            <div class="css-status-inactive" *ngIf="row[column.prod] == 0">
+              <div class="custom-circle-color"></div>
+              <div>Inactive</div>
+            </div>
+            <div class="css-status-notConfirm" *ngIf="row[column.prod] === 2">
+              <div class="custom-circle-color"></div>
+              <div>Upcoming</div>
+            </div>
+            <div class="css-status-common" *ngIf="row[column.prod] === 3">
+              <div
+                class="custom-circle-color"
+                style="background-color: #89a357"
+              ></div>
+              <div>Ongoing</div>
+            </div>
+            <div class="css-status-common" *ngIf="row[column.prod] === 4">
+              <div
+                class="custom-circle-color"
+                style="background-color: #db696a"
+              ></div>
+              <div>Finished</div>
+            </div>
+            <div class="css-status" *ngIf="row[column.prod] == 'draft'">
+              <div class="custom-circle-color"></div>
+              <div>Draft</div>
+            </div>
+            <div class="css-status" *ngIf="row[column.prod] == 'published'">
+              <div class="custom-circle-color"></div>
+              <div>Published</div>
+            </div>
+          </ng-container>
+          <ng-container *ngSwitchCase="'banner-status'">
+            <div class="css-status-common" *ngIf="row[column.prod]?.toLowerCase() == 'draft'">
+              <div
+                class="custom-circle-color"
+                style="background-color: #94949e"
+              ></div>
+              <div>Draft</div>
+            </div>
+            <div
+              class="css-status-common"
+              *ngIf="row[column.prod] == 'published'"
+            >
+              <div
+                class="custom-circle-color"
+                style="background-color: #467ad0"
+              ></div>
+              <div>Published</div>
+            </div>
+            <div class="css-status-common" *ngIf="row[column.prod] === 'Looping'">
+              <div
+                class="custom-circle-color"
+                style="background-color: #467AD0"
+              ></div>
+              <div>Looping</div>
+            </div>
+            <div class="css-status-common" *ngIf="row[column.prod] === 'Scheduled'">
+              <div
+                class="custom-circle-color"
+                style="background-color: #DD9300"
+              ></div>
+              <div>Scheduled</div>
+            </div>
+            <div class="css-status-common" *ngIf="row[column.prod] === 'Sent'">
+              <div
+                class="custom-circle-color"
+                style="background-color: #20BB71"
+              ></div>
+              <div>Sent</div>
+            </div>
+            <div class="css-status-common" *ngIf="row[column.prod] === 'Enable'">
+              <div
+                class="custom-circle-color"
+                style="background-color: #20BB71"
+              ></div>
+              <div>Enable</div>
+            </div>
+            <div class="css-status-common" *ngIf="row[column.prod] === 'Disable'">
+              <div
+                class="custom-circle-color"
+                style="background-color: #94949e"
+              ></div>
+              <div>Disable</div>
+            </div>
+          </ng-container>
+
+          <ng-container *ngSwitchCase="'toggle-status'">
+            <div class="css-statusFa" *ngIf="row[column.prod]">Enable</div>
+            <div class="css-statusFa-inactive" *ngIf="!row[column.prod]">
+              Disable
+            </div>
+          </ng-container>
+          <ng-container *ngSwitchCase="'confirm-status'">
+            <div
+              class="css-status-common"
+              *ngIf="row[column.prod] === 'Reconciled'"
+            >
+              <div
+                class="custom-circle-color"
+                style="background-color: #89a357"
+              ></div>
+              <div>Confirmed</div>
+            </div>
+            <div
+              class="css-status-common"
+              *ngIf="row[column.prod] === 'Not reconciled'"
+            >
+              <div
+                class="custom-circle-color"
+                style="background-color: #d5cd2d"
+              ></div>
+              <div>Not Confirmed</div>
+            </div>
+          </ng-container>
+          <ng-container *ngSwitchCase="'invoice-status'">
+            <div class="css-status" *ngIf="row[column.prod] === 'Reconciled'">
+              <div class="custom-circle-color"></div>
+              Reconciled
+            </div>
+            <div
+              class="css-status-inactive"
+              *ngIf="row[column.prod] === 'Not reconciled'"
+            >
+              <div class="custom-circle-color"></div>
+              Not reconciled
+            </div>
+            <div class="css-status" *ngIf="row[column.prod] == 'Unpaid'">
+              <div style="background-color: #EE0033; width: 8px; height: 8px;" class="custom-circle-color"></div>
+              Unpaid
+            </div>
+            <div
+              class="css-status-inactive"
+              *ngIf="row[column.prod] == 'Paid'"
+            >
+              <div style="background-color: #20BB71; width: 8px; height: 8px;" class="custom-circle-color"></div>
+              Paid
+            </div>
+          </ng-container>
+          <ng-container *ngSwitchCase="'payment-status'">
+            <div class="css-status" *ngIf="row[column.prod] == 'Unpaid'">
+              <div style="background-color: #EE0033; width: 8px; height: 8px;" class="custom-circle-color"></div>
+              Unpaid
+            </div>
+            <div
+              class="css-status-inactive"
+              *ngIf="row[column.prod] == 'Paid'"
+            >
+              <div style="background-color: #20BB71; width: 8px; height: 8px;" class="custom-circle-color"></div>
+              Paid
+            </div>
+          </ng-container>
+          <ng-container *ngSwitchCase="'time'">
+            {{
+              row[column.prod]
+                | convertTime
+                  : (!column.format ? "DD/MM/YYYY HH:mm:ss" : column.format)
+            }}
+          </ng-container>
+          <ng-container *ngSwitchCase="'date'">
+            {{ row[column.prod] | convertTime : "DD/MM/YYYY" }}
+          </ng-container>
+          <ng-container *ngSwitchCase="'money'">
+            {{
+              row[column.prod]
+                | convertMoney
+                  : column?.unit
+                  : (!column?.maxFractionDigit ? 0 : column?.maxFractionDigit)
+            }}
+          </ng-container>
+          <ng-container *ngIf="column.type == 'text'">
+            <div class="d-flex w-100">
+              <div
+                style="max-width: inherit"
+                class="text-ellipsis"
+                ellipsisCheck
+                matTooltipClass="customer-tooltip-menu"
+                [matTooltip]="row[column.prod]"
+                matTooltipPosition="right"
+              >
+                {{ row[column.prod] }}
+              </div>
+            </div>
+          </ng-container>
+          <ng-container *ngSwitchCase="'in-process'">
+            <div
+              class="css-status-service-actived"
+              *ngIf="row[column.prod] === 2"
+            >
+              <div class="custom-circle-color"></div>
+              Service activated
+            </div>
+            <div class="css-status-in-process" *ngIf="row[column.prod] === 1">
+              <div class="custom-circle-color"></div>
+              In progress
+            </div>
+            <div class="css-status-new" *ngIf="row[column.prod] === 0">
+              <div class="custom-circle-color"></div>
+              New
+            </div>
+          </ng-container>
+          <ng-container *ngSwitchCase="'action'">
+            <div
+              class="align-items-center col-actions d-flex justify-content-end"
+            >
+              <button
+                *ngIf="
+                  action?.view &&
+                  row?.roleBaseOrigin != 'workspace' &&
+                  row?.roleBaseOrigin != ''
+                "
+                mat-flat-button
+                mat-icon-button
+                matTooltipClass="customer-tooltip-menu"
+                [matTooltip]="isTranslate ? ('View Detail' | translate) : 'View Detail'"
+                matTooltipPosition="below"
+                color="default"
+                class="vcs-button sm btn-table-actions mx-1"
+                (click)="handlerAction(row, this.actionType.VIEW)"
+              >
+                <mat-icon
+                  class="vcs-icon-16"
+                  svgIcon="vcs-information-circle-outline-24"
+                >
+                </mat-icon>
+              </button>
+              <button
+                *ngIf="
+                  action?.update &&
+                  row?.roleBaseOrigin != 'workspace' &&
+                  row?.roleBaseOrigin != 'admin' &&
+                  row?.roleBaseOrigin != '' && row.status != 'Sent'  && row.status != 'Looping'
+                "
+                mat-flat-button
+                mat-icon-button
+                matTooltipClass="customer-tooltip-menu"
+                [matTooltip]="'Edit'"
+                matTooltipPosition="below"
+                color="default"
+                class="vcs-button sm btn-table-actions mx-1"
+                (click)="handlerAction(row, this.actionType.UPDATE)"
+              >
+                <mat-icon class="vcs-icon-16" svgIcon="vcs-edit-outline-24">
+                </mat-icon>
+              </button>
+              <button
+                *ngIf="
+                  action?.delete &&
+                  row?.roleBaseOrigin != 'workspace' &&
+                  row?.roleBaseOrigin != 'admin' &&
+                  row?.roleBaseOrigin != ''&& row.status != 'Sent' && row.status != 'Looping'
+                "
+                mat-flat-button
+                mat-icon-button
+                matTooltipClass="customer-tooltip-menu"
+                [matTooltip]="'Delete'"
+                matTooltipPosition="below"
+                color="default"
+                class="vcs-button sm btn-table-actions mx-1"
+                (click)="handlerAction(row, this.actionType.DELETE)"
+              >
+                <mat-icon class="vcs-icon-16" svgIcon="vcs-bin-1"></mat-icon>
+              </button>
+              <button
+                *ngIf="action?.attachment"
+                mat-flat-button
+                mat-icon-button
+                matTooltipClass="customer-tooltip-menu"
+                [matTooltip]="'Update status'"
+                matTooltipPosition="below"
+                color="default"
+                class="vcs-button sm btn-table-actions mx-1"
+                (click)="handlerAction(row, this.actionType.UPDATE_STATUS)"
+              >
+                <mat-icon class="vcs-icon-16" svgIcon="icon-attachment-ticket">
+                </mat-icon>
+              </button>
+              <button
+                *ngIf="action?.union"
+                mat-flat-button
+                mat-icon-button
+                matTooltipClass="customer-tooltip-menu"
+                [matTooltip]="'Assign'"
+                matTooltipPosition="below"
+                color="default"
+                class="vcs-button sm btn-table-actions mx-1"
+                (click)="handlerAction(row, this.actionType.UNION)"
+              >
+                <mat-icon class="vcs-icon-16" svgIcon="icon-asign-ticket">
+                </mat-icon>
+              </button>
+              <button
+                *ngIf="action?.payment"
+                mat-flat-button
+                mat-icon-button
+                matTooltipClass="customer-tooltip-menu"
+                [matTooltip]="isTranslate ? ('Payment' | translate) : 'Payment'"
+                matTooltipPosition="below"
+                color="default"
+                class="vcs-button sm btn-table-actions mx-1"
+                (click)="handlerAction(row, this.actionType.PAYMENT)"
+              >
+                <mat-icon class="vcs-icon-16" svgIcon="icon-payment-table">
+                </mat-icon>
+              </button>
+              <button
+                *ngIf="action?.download"
+                mat-flat-button
+                mat-icon-button
+                matTooltipClass="customer-tooltip-menu"
+                [matTooltip]="isTranslate ? ('Download' | translate) : 'Download'"
+                matTooltipPosition="below"
+                color="default"
+                class="vcs-button sm btn-table-actions mx-1"
+                (click)="handlerAction(row, this.actionType.DOWNLOAD)"
+              >
+                <mat-icon class="vcs-icon-16" svgIcon="icon-download-table">
+                </mat-icon>
+              </button>
+            </div>
+          </ng-container>
+          <ng-container *ngSwitchCase="'templateRef'">
+            <ng-container
+              [ngTemplateOutlet]="column?.templateRef"
+              [ngTemplateOutletContext]="{ data: row , columnData: row[column.prod] }"
+            ></ng-container>
+          </ng-container>
+        </ng-container>
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-footer>
+      <ng-template ngx-datatable-footer-template>
+        <vcs-pager
+          #pager
+          *ngIf="rows?.length"
+          [page]="1"
+          [size]="configTable.pageSize"
+          [count]="configTable.total"
+          (change)="handlePageEvent($event)"
+        >
+        </vcs-pager>
+      </ng-template>
+    </ngx-datatable-footer>
+  </ngx-datatable>
+</div>
