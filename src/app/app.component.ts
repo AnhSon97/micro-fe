@@ -591,23 +591,7 @@ export class AppComponent {
     };
   }
   chartBar() {
-    /**
- * ---------------------------------------
- * This demo was created using amCharts 5.
- * 
- * For more information visit:
- * https://www.amcharts.com/
- * 
- * Documentation is available at:
- * https://www.amcharts.com/docs/v5/
- * ---------------------------------------
- */
-
-    // Create root element
-    // https://www.amcharts.com/docs/v5/getting-started/#Root_element
     var root = am5.Root.new("chartdiv");
-
-
     // Set themes
     // https://www.amcharts.com/docs/v5/concepts/themes/
     root.setThemes([
@@ -720,6 +704,203 @@ export class AppComponent {
     series.data.setAll(data);
     series.appear(1000);
     chart.appear(1000, 100);
+  }
+
+  barchart2() {
+    // Create root element
+    // https://www.amcharts.com/docs/v5/getting-started/#Root_element
+    var root = am5.Root.new("chartdiv");
+    // Set themes
+    // https://www.amcharts.com/docs/v5/concepts/themes/
+    root.setThemes([
+      am5themes_Animated.new(root)
+    ]);
+
+
+    // Create chart
+    // https://www.amcharts.com/docs/v5/charts/xy-chart/
+    var chart = root.container.children.push(am5xy.XYChart.new(root, {
+      panX: false,
+      panY: false,
+      paddingLeft: 0,
+      wheelX: "panX",
+      wheelY: "zoomX",
+      layout: root.verticalLayout
+    }));
+
+
+    // Add legend
+    // https://www.amcharts.com/docs/v5/charts/xy-chart/legend-xy-series/
+    var legend = chart.children.push(
+      am5.Legend.new(root, {
+        centerX: am5.p50,
+        x: am5.p50
+      })
+    );
+
+    var data = [{
+      "year": "2021",
+      "europe": 2.5,
+      "namerica": 2.5,
+      "asia": 2.1,
+      "lamerica": 1,
+      "meast": 0.8,
+      "africa": 0.4
+    }, {
+      "year": "2022",
+      "europe": 2.6,
+      "namerica": 2.7,
+      "asia": 2.2,
+      "lamerica": 0.5,
+      "meast": 0.4,
+      "africa": 0.3
+    }, {
+      "year": "2023",
+      "europe": 2.8,
+      "namerica": 2.9,
+      "asia": 2.4,
+      "lamerica": 0.3,
+      "meast": 0.9,
+      "africa": 0.5
+    }]
+
+
+    // Create axes
+    // https://www.amcharts.com/docs/v5/charts/xy-chart/axes/
+    var xRenderer = am5xy.AxisRendererX.new(root, {
+      cellStartLocation: 0.1,
+      cellEndLocation: 0.9,
+      minorGridEnabled: true
+    })
+
+    var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+      categoryField: "year",
+      renderer: xRenderer,
+      tooltip: am5.Tooltip.new(root, {})
+    }));
+
+    xRenderer.grid.template.setAll({
+      location: 1
+    })
+
+    xAxis.data.setAll(data);
+
+    var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+      renderer: am5xy.AxisRendererY.new(root, {
+        strokeOpacity: 0.1
+      }),
+      numberFormatter: am5.NumberFormatter.new(root, {
+        "numberFormat": "#,###a"
+      }),
+    }));
+
+
+    // Add series
+    // https://www.amcharts.com/docs/v5/charts/xy-chart/series/
+    function makeSeries(name, fieldName, fill) {
+      var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+        name: name,
+        xAxis: xAxis,
+        yAxis: yAxis,
+        valueYField: fieldName,
+        categoryXField: "year"
+      }));
+
+      series.columns.template.setAll({
+        tooltipText: "{name}, {categoryX}:{valueY}",
+        width: am5.percent(90),
+        tooltipY: 0,
+        strokeOpacity: 0,
+        cornerRadiusTR: 5,
+        cornerRadiusTL: 5,
+      });
+      series.columns.template.states.create("riseFromPrevious", {
+        fill: am5.color(fill),
+      });
+
+      series.data.setAll(data);
+
+      // Make stuff animate on load
+      // https://www.amcharts.com/docs/v5/concepts/animations/
+      series.appear();
+      series.bullets.push(function () {
+        return am5.Bullet.new(root, {
+          locationY: 0,
+          sprite: am5.Label.new(root, {
+            text: "{valueY}",
+            fill: root.interfaceColors.get("alternativeText"),
+            centerY: 0,
+            centerX: am5.p50,
+            populateText: true
+          })
+        });
+      });
+    }
+
+    makeSeries("Europe", "europe", "#2DC6F9");
+    makeSeries("North America", "namerica", "#F3B90C");
+
+
+    // Make stuff animate on load
+    // https://www.amcharts.com/docs/v5/concepts/animations/
+    chart.appear(1000, 100);
+  }
+
+  pieChart() {
+
+    var root = am5.Root.new("chartdiv");
+    root.setThemes([
+      am5themes_Animated.new(root)
+    ]);
+    var chart = root.container.children.push(am5percent.PieChart.new(root, {
+      startAngle: 0,
+      endAngle: 360,
+      layout: root.verticalLayout,
+      innerRadius: am5.percent(50)
+    }));
+    var bgColor = root.interfaceColors.get("background");
+    var series = chart.series.push(am5percent.PieSeries.new(root, {
+      startAngle: 0,
+      endAngle: 360,
+      valueField: "value",
+      categoryField: "category",
+      alignLabels: false,
+    }));
+    series.set("colors", am5.ColorSet.new(root, {
+      colors: [
+        am5.color("#A666FF"),
+        am5.color("#55CD2C"),
+        am5.color("#FF66BF"),
+        am5.color("#29CCA3"),
+        am5.color("#F1774E"),
+        am5.color("#7194FF"),
+        am5.color("#9EEC11"),
+        am5.color("#2DC6F9"),
+        am5.color("#F3B90C"),
+      ]
+    }))
+
+    series.slices.template.setAll({
+      strokeWidth: 2,
+      stroke: bgColor,
+    });
+
+    series.ticks.template.setAll({
+      forceHidden: true
+    });
+    series.data.setAll([
+      { value: 10, category: "One" },
+      { value: 9, category: "Two" },
+      { value: 6, category: "Three" },
+      { value: 5, category: "Four" },
+      { value: 4, category: "Five" },
+      { value: 3, category: "Six" },
+      { value: 1, category: "Seven" },
+      { value: 17, category: "Six" },
+      { value: 4, category: "Seven" }
+    ]);
+
+    series.appear(1000, 100);
   }
 }
 
