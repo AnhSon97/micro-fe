@@ -590,4 +590,137 @@ export class AppComponent {
       ]
     };
   }
+  chartBar() {
+    /**
+ * ---------------------------------------
+ * This demo was created using amCharts 5.
+ * 
+ * For more information visit:
+ * https://www.amcharts.com/
+ * 
+ * Documentation is available at:
+ * https://www.amcharts.com/docs/v5/
+ * ---------------------------------------
+ */
+
+    // Create root element
+    // https://www.amcharts.com/docs/v5/getting-started/#Root_element
+    var root = am5.Root.new("chartdiv");
+
+
+    // Set themes
+    // https://www.amcharts.com/docs/v5/concepts/themes/
+    root.setThemes([
+      am5themes_Animated.new(root)
+    ]);
+
+
+    // Create chart
+    // https://www.amcharts.com/docs/v5/charts/xy-chart/
+    var chart = root.container.children.push(am5xy.XYChart.new(root, {
+      panX: false,
+      panY: false,
+      wheelX: "none",
+      wheelY: "none",
+      paddingLeft: 0,
+      paddingRight: 20,
+    }));
+
+    // We don't want zoom-out button to appear while animating, so we hide it
+    chart.zoomOutButton.set("forceHidden", true);
+
+
+    // Create axes
+    // https://www.amcharts.com/docs/v5/charts/xy-chart/axes/
+    var yRenderer = am5xy.AxisRendererY.new(root, {
+      minGridDistance: 30,
+      minorGridEnabled: true
+    });
+
+    yRenderer.grid.template.set("location", 1);
+
+    var yAxis = chart.yAxes.push(am5xy.CategoryAxis.new(root, {
+      maxDeviation: 0,
+      categoryField: "network",
+      renderer: yRenderer,
+    }));
+
+    var xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+      maxDeviation: 0,
+      min: 0,
+      numberFormatter: am5.NumberFormatter.new(root, {
+        "numberFormat": "#,###a"
+      }),
+      extraMax: 0.2,
+      renderer: am5xy.AxisRendererX.new(root, {
+        strokeOpacity: 0.1,
+      })
+    }));
+
+
+    // Add series
+    // https://www.amcharts.com/docs/v5/charts/xy-chart/series/
+    var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+      name: "Series 1",
+      xAxis: xAxis,
+      yAxis: yAxis,
+      valueXField: "value",
+      categoryYField: "network",
+    }));
+    series.bullets.push(function () {
+      return am5.Bullet.new(root, {
+        locationX: 1,
+        locationY: 0.5,
+        sprite: am5.Label.new(root, {
+          centerY: am5.p50,
+          text: "{test}",
+          populateText: true
+        })
+      });
+    });
+
+    // Rounded corners for columns
+    series.columns.template.setAll({
+      cornerRadiusTR: 5,
+      cornerRadiusBR: 5,
+      strokeOpacity: 0,
+      height: am5.p50,
+    });
+
+
+    // Make each column to be of a different color
+    series.columns.template.adapters.add("fill", function (fill, target) {
+      return am5.color(0x095256);
+    });
+
+
+
+    // Set data
+    var data = [
+      {
+        "network": "Facebook",
+        "value": 40000,
+        "test": "123"
+      },
+      {
+        "network": "Google+",
+        "value": 100000
+      },
+      {
+        "network": "Instagram",
+        "value": 1000000
+      },
+      {
+        "network": "Pinterest",
+        "value": 2000000
+      }
+    ];
+
+    yAxis.data.setAll(data);
+    series.data.setAll(data);
+    series.appear(1000);
+    chart.appear(1000, 100);
+  }
 }
+
+
