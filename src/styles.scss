@@ -16,3 +16,71 @@
         stroke-dashoffset: 20;
     }
 }
+
+@for $value from 1 through 100 {
+  $width: percentage($value/100);
+
+  .w-#{$value} {
+    width: $width;
+  }
+
+  .p-#{$value}px {
+    padding: #{$value}px;
+  }
+
+  .px-#{$value}px {
+    padding-left: #{$value}px;
+    padding-right: #{$value}px;
+  }
+
+  .py-#{$value}px {
+    padding-top: #{$value}px;
+    padding-bottom: #{$value}px;
+  }
+
+  .pl-#{$value}px {
+    padding-left: #{$value}px;
+  }
+
+  .pt-#{$value}px {
+    padding-top: #{$value}px;
+  }
+
+  .pr-#{$value}px {
+    padding-right: #{$value}px;
+  }
+
+  .pb-#{$value}px {
+    padding-bottom: #{$value}px;
+  }
+
+  .m-#{$value}px {
+    margin: #{$value}px;
+  }
+
+  .mx-#{$value}px {
+    margin-left: #{$value}px;
+    margin-right: #{$value}px;
+  }
+
+  .my-#{$value}px {
+    margin-top: #{$value}px;
+    margin-bottom: #{$value}px;
+  }
+
+  .ml-#{$value}px {
+    margin-left: #{$value}px;
+  }
+
+  .mt-#{$value}px {
+    margin-top: #{$value}px;
+  }
+
+  .mr-#{$value}px {
+    margin-right: #{$value}px;
+  }
+
+  .mb-#{$value}px {
+    margin-bottom: #{$value}px;
+  }
+}
